@@ -1,0 +1,41 @@
+# Builds devtools base image "creator-base" which pre-installs python and all
+# binary dependencies. This makes each derived image much faster to build, even
+# when using QEMU emulation.
+ARG EE_BASE_IMAGE=registry.access.redhat.com/ubi9/ubi
+FROM $EE_BASE_IMAGE
+
+# https://github.com/opencontainers/image-spec/blob/main/annotations.md
+LABEL org.opencontainers.image.source https://github.com/ansible/creator-ee/blob/main/base/Containerfile
+LABEL org.opencontainers.image.authors "Ansible DevTools"
+LABEL org.opencontainers.image.vendor "Red Hat"
+LABEL org.opencontainers.image.licenses "GPL-3.0"
+
+ENV HOME /home/runner
+
+USER root
+
+RUN \
+microdnf -y upgrade && \
+microdnf install -y \
+dumb-init \
+git-core \
+podman \
+python3 \
+python3-bcrypt \
+python3-cffi \
+python3-markupsafe \
+# pypi has binaries with better security:
+# python3-cryptography \
+python3-pip \
+python3-pynacl \
+python3-pyrsistent \
+python3-pyyaml \
+python3-ruamel-yaml \
+python3-wheel \
+&& microdnf clean all \
+
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash && \
+export NVM_DIR="$HOME/.nvm" && \
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+nvm install 16.20.0
+ENV VSCODE_NODEJS_RUNTIME_DIR="$HOME/.nvm/versions/node/v16.20.0/bin/"
